@@ -22,6 +22,24 @@
                         @endforeach
                         <a class="d-none radio-add-new-btn" href="#" data-toggle="tooltip" data-placement="top" title="add new"><i class="fa fa-plus"></i></a>
                     </div>
+                    @elseif($field["type"] === 'select')
+                    <div class="form-group row field">
+                        <input type="hidden" class="field-id" value="{{ $field['id'] }}">
+                        <label class="col-4 col-4 col-form-label text-md-right">{{ $field["label"] }}</label>
+                        <div class="col-6 col-6">
+                            <select class="form-control">
+                                @foreach($field["options"]
+                                as $option)
+                               <option value="{{ $option['value'] }}" option-id="{{ $option['id'] }}">{{ $option["name"] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-2 col-2">
+                            <a class="d-none select-edit-btn" href="#" data-toggle="tooltip" data-placement="top" title="edit"><i class="fa fa-edit"></i></a>
+                            <a class="d-none select-delete-btn" href="#" data-toggle="tooltip" data-placement="top" title="delete"><i class="fa fa-trash"></i></a>
+                            <a class="d-none select-add-btn" href="#" data-toggle="tooltip" data-placement="top" title="add new"><i class="fa fa-plus"></i></a>
+                        </div>
+                    </div>
                     @else
                     <div class="form-group row field">
                         <label class="col-md-4 col-form-label text-md-right">{{ $field["label"] }}</label>
@@ -52,11 +70,13 @@
 <script>
     $(document).ready(function() {
 
-        $(".field").hover(function() {
-            $(this).find("a").removeClass("d-none");
-        }, function() {
-            $(this).find("a").addClass("d-none");
-        });
+        $(".field a").removeClass("d-none");
+
+        // $(".field").hover(function() {
+        //     $(this).find("a").removeClass("d-none");
+        // }, function() {
+        //     $(this).find("a").addClass("d-none");
+        // });
 
         $(".field").on("click","a", function(e) {
             e.preventDefault();
@@ -104,8 +124,7 @@
                 url: '{{ env('APP_URL') }}' + '/admin/register_form/edit',
                 type: 'POST',
                 data: $(this).serialize(),
-                success: function(res) {
-                    // console.log(res);
+                success: function(res) { 
                     if(res){
                         window.location =window.location.href;
                     }
@@ -129,6 +148,101 @@
             $("#radio-modal input[name='field_id']").val(field_id);
             $("#radio-modal input[name='radio_id']").val(radio_id);
         });
+
+        // $(".field .select-edit-btn").click(function() {
+        //     $("#select-modal").modal("show");
+        //     var field = $(this).parents(".field");
+        // });
+
+
+        //Select 
+        $(".field .select-delete-btn").click(function() {
+            var field = $(this).parents(".field");
+            var field_id = field.find(".field-id").val();
+            var selected_id = field.find("select option:selected").attr("option-id");
+            var selected_name = field.find("select option:selected").text();
+            if(confirm(selected_name + " will be deleted?")){
+                $.ajax({
+                url: '{{ env('APP_URL') }}' + '/admin/register_form/edit',
+                type: 'POST',
+                data: {type: 'select', action: 'delete', field_id : field_id, option_id: selected_id, _token: "{{csrf_token()}}" },
+                success: function(res) {
+                    if(res){
+                        window.location = window.location.href;
+                    }
+                }
+            });
+            }         
+        });
+
+        $(".field .select-add-btn").click(function() {
+            $("#select-add-modal").modal("show");
+            var field = $(this).parents(".field");
+            var field_id = field.find(".field-id").val();
+            $("#select-add-modal input[name='field_id']").val(field_id);
+        });
+
+        $("#select-add-modal form").submit(function(e) {
+            e.preventDefault();
+            var data = getFormData($(this));
+            data.type = "select";
+            data.action = "add";
+            $.ajax({
+                url: '{{ env('APP_URL') }}' + '/admin/register_form/edit',
+                type: 'POST',
+                data: data,
+                success: function(res) {
+                    if(res){
+                        window.location = window.location.href;
+                    }
+                }
+            });
+        });
+
+        $(".field .select-edit-btn").click(function() {
+            $("#select-edit-modal").modal("show");
+            var field = $(this).parents(".field");
+            var field_id = field.find(".field-id").val();
+            var selected_id = field.find("select option:selected").attr("option-id");
+            var selected_value = field.find("select option:selected").attr("value");
+            var selected_name = field.find("select option:selected").text();
+
+            $("#select-edit-modal input[name='field_id']").val(field_id);
+            $("#select-edit-modal input[name='name']").val(selected_name);
+            $("#select-edit-modal input[name='value']").val(selected_value);
+            $("#select-edit-modal input[name='option_id']").val(selected_id);
+            
+        });
+
+        $("#select-edit-modal form").submit(function(e) {
+            e.preventDefault();
+            var data = getFormData($(this));
+            data.type = "select";
+            data.action = "edit";
+            $.ajax({
+                url: '{{ env('APP_URL') }}' + '/admin/register_form/edit',
+                type: 'POST',
+                data: data,
+                success: function(res) {
+                    if(res){
+                        window.location = window.location.href;
+                    }
+                }
+            });
+        });
+
+        function getFormData($form){
+            var unindexed_array = $form.serializeArray();
+            var indexed_array = {};
+
+            $.map(unindexed_array, function(n, i){
+                indexed_array[n['name']] = n['value'];
+            });
+
+            return indexed_array;
+        }
+
+        
 
 });
 

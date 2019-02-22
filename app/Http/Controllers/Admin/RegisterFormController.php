@@ -28,6 +28,7 @@ class RegisterFormController extends Controller
 
     public function update(Request $request)
     {
+
         $id = round(microtime(true) * 1000);
         $register_form_fields = $this->register_form_fields;
         $field_type = $register_form_fields[$request->field_id]["type"];
@@ -37,6 +38,15 @@ class RegisterFormController extends Controller
                 $register_form_fields[$request->field_id]["radios"][$request->radio_id]["value"] = $request->value;
             } else {
                 $register_form_fields[$request->field_id]["radios"][$id] = ["id" => $id, "name" => $request->name, "value" => $request->value];
+            }
+        } elseif ($field_type == "select") {
+            if ($request->action == "delete") {
+                unset($register_form_fields[$request->field_id]["options"][$request->option_id]);
+            } elseif ($request->action == "add") {
+                $register_form_fields[$request->field_id]["options"][$id] = ["id" => $id, "name" => $request->name, "value" => $request->value];
+            } else {
+                $register_form_fields[$request->field_id]["options"][$request->option_id]["name"] = $request->name;
+                $register_form_fields[$request->field_id]["options"][$request->option_id]["value"] = $request->value;
             }
         } else {
             $register_form_fields[$request->field_id]["label"] = $request->label;
